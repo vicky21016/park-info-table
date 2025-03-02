@@ -72,24 +72,26 @@
       const prev = document.querySelector("#prev");
       const next = document.querySelector("#next");
 
-      let allData = []; // 儲存載入的所有資料
+      let allData = []; // 存放載入的所有公園CSV資料
       const itemsPage = 50; // 每頁顯示 50 筆資料 (itemsPage = 50)  // 公園資料很多，如何提升效能？加入分頁功能每次只顯示 50 筆，減少 DOM 操作，提高渲染速度與效能
       let currentPage = 1; // 使用 currentPage 控制當前頁數，點擊 上一頁/下一頁 來更新 currentPage
 
       loadData();
 
+      // 載入 CSV 資料
       async function loadData() {
         try {
           const result = await fetch("datas.csv").then(res => res.text()); // 透過 fetch("datas.csv") 讀取 CSV 檔案，轉換成陣列並儲存到 allData
-          const datas = result.split(/\r\n/).map((d) => d.split(",")); // CSV 資料讀取後如何轉換成結構化的 JavaScript 陣列：使用 .split(/\r\n/) 來切割每一行，並用 .map(row.split(",")) 來處理每個欄位
-          allData = datas;
-          randerDOM(datas);
-          selectOptions(groupData(datas));
+          const datas = result.split(/\r\n/).map((d) => d.split(",")); // CSV 資料讀取後轉換成結構化的 JavaScript 陣列：使用 .split(/\r\n/) 來切割每一行，並用 .map(row.split(",")) 來處理每個欄位
+          allData = datas; // 將 CSV 內容存入 allData 變數
+          randerDOM(datas); // 顯示資料
+          selectOptions(groupData(datas)); // 動態生成篩選選單
         } catch (error) {
           console.log(error);
         }
       }
 
+      // 渲染表格
       function randerDOM(datas) {
         tableHeader.innerHTML = "";
         tableBody.innerHTML = "";
@@ -107,7 +109,7 @@
         const start = (currentPage - 1) * itemsPage;
         const end = start + itemsPage;
 
-        datas.slice(start + 1, end + 1).forEach(row => {
+        datas.slice(start + 1, end + 1).forEach(row => { // 只顯示當前頁面的 50 筆資料，避免一次渲染過多影響效能
           const tr = document.createElement("tr");
           row.forEach(rows => {
             const td = document.createElement("td");
@@ -124,7 +126,7 @@
             const longitude = row[6];
             const latitude = row[7];
             if (longitude && latitude) { // 每個公園都有經緯度資料
-              const googleMap = `https://www.google.com/maps?q=${latitude},${longitude}`; // 點擊「查看地圖」按鈕時，會 打開 Google 地圖並導航至該公園位置
+              const googleMap = `https://www.google.com/maps?q=${latitude},${longitude}`; // 點擊「查看地圖」按鈕時，會打開 Google 地圖並導航至該公園位置
               window.open(googleMap, "_blank");
             } else {
               console.log(error);
@@ -138,9 +140,9 @@
         });
       }
 
-
+      // 篩選功能
       function groupData(datas) { // 使用 groupData() 函式將資料分類（地區、公園名稱、公園種類）
-        return datas.slice(1).reduce(
+        return datas.slice(1).reduce( 
           (prev, curr) => {
             const area = curr[1];
             const park = curr[2];
@@ -210,7 +212,7 @@
           return result;
         }, []);
 
-        currentPage = 1;
+        currentPage = 1; // 每次篩選後，將 currentPage 重設為 1，顯示第一頁
 
         randerDOM([allData[0], ...filterByData]); // 篩選後會重新渲染表格 (randerDOM())
       }
