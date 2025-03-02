@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>公園資料表格</title>
+    <!-- 這是一個 公園資料篩選與查詢系統，可以讓使用者透過 地區、公園名稱、公園種類 進行篩選，並且能夠 分頁顯示資料，還可以點擊按鈕開啟 Google 地圖查看公園位置。 -->
+     <!-- 這個作品的主要目標是：
+✅ 提升查詢效率，讓使用者能快速找到想要的公園資訊
+✅ 使用者體驗優化，提供篩選功能，減少不必要的資訊干擾
+✅ 分頁顯示，防止資料過多時影響效能與使用者體驗 -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .table-responsive {
+        margin-top: 20px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <!-- 這個專案使用了 HTML、CSS、JavaScript、Bootstrap 來實作，並且透過 CSV 檔案讀取資料，然後使用 JavaScript 來 處理篩選、分頁與資料渲染。 -->
+  <body>
+    <div class="container my-4">
+      <h2 class="text-center mb-4">公園資料表格</h2>
+      <div class="row mb-3">
+        <div class="col-md-3 mb-2">
+          <button id="button" class="btn btn-primary">重新篩選</button>
+        </div>
+        <div class="col-md-3 mb-2">
+          <select id="areaSelector" class="form-select">
+            <option value="">請選擇地區</option>
+          </select>
+        </div>
+        <div class="col-md-3 mb-2">
+          <select id="parkSelector" class="form-select">
+            <option value="">請選擇公園</option>
+          </select>
+        </div>
+        <div class="col-md-3 mb-2">
+          <select id="typeSelection" class="form-select">
+            <option value="">請選擇公園種類</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-primary">
+            <tr id="tableHeader" class="text-center"></tr>
+          </thead>
+          <tbody id="tableBody" class="text-center"></tbody>
+        </table>
+      </div>
+      <div class="ctrl text-center">
+        <button id="prev" class="btn btn-primary">上一頁</button>
+        <button id="next" class="btn btn-primary">下一頁</button>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      const button = document.querySelector("#button");
+      const areaSelector = document.querySelector("#areaSelector");
+      const parkSelector = document.querySelector("#parkSelector");
+      const typeSelection = document.querySelector("#typeSelection");
+      const tableHeader = document.querySelector("#tableHeader");
+      const tableBody = document.querySelector("#tableBody");
+      const prev = document.querySelector("#prev");
+      const next = document.querySelector("#next");
+
+      let allData = []; // 儲存載入的所有資料
+      const itemsPage = 50; // 每頁顯示 50 筆資料 (itemsPage = 50)  // 公園資料很多，如何提升效能？加入分頁功能每次只顯示 50 筆，減少 DOM 操作，提高渲染速度與效能
+      let currentPage = 1; // 使用 currentPage 控制當前頁數，點擊 上一頁/下一頁 來更新 currentPage
+
+      loadData();
+
+      async function loadData() {
+        try {
+          const result = await fetch("datas.csv").then(res => res.text()); // 透過 fetch("datas.csv") 讀取 CSV 檔案，轉換成陣列並儲存到 allData
+          const datas = result.split(/\r\n/).map((d) => d.split(",")); // CSV 資料讀取後如何轉換成結構化的 JavaScript 陣列：使用 .split(/\r\n/) 來切割每一行，並用 .map(row.split(",")) 來處理每個欄位
+          allData = datas;
+          randerDOM(datas);
+          selectOptions(groupData(datas));
+        } catch (error) {
+          console.log(error);
+        }
+      }
+
+      function randerDOM(datas) {
+        tableHeader.innerHTML = "";
+        tableBody.innerHTML = "";
+
+        datas[0].forEach(header => {
+          const th = document.createElement("th");
+          th.textContent = header;
+          tableHeader.append(th);
+        });
+
+        const th = document.createElement("th");
+        th.textContent = "google map";
+        tableHeader.append(th);
+
+        const start = (currentPage - 1) * itemsPage;
+        const end = start + itemsPage;
+
+        datas.slice(start + 1, end + 1).forEach(row => {
+          const tr = document.createElement("tr");
+          row.forEach(rows => {
+            const td = document.createElement("td");
+            td.textContent = rows;
+            tr.append(td);
+          });
+
+          const buttonTd = document.createElement("td");
+          const btn = document.createElement("button");
+          btn.textContent = "查看地圖";
+          btn.classList.add("btn", "btn-sm", "btn-primary");
+
+          btn.addEventListener("click", () => {
+            const longitude = row[6];
+            const latitude = row[7];
+            if (longitude && latitude) { // 每個公園都有經緯度資料
+              const googleMap = `https://www.google.com/maps?q=${latitude},${longitude}`; // 點擊「查看地圖」按鈕時，會 打開 Google 地圖並導航至該公園位置
+              window.open(googleMap, "_blank");
+            } else {
+              console.log(error);
+            }
+          });
+
+          buttonTd.append(btn);
+          tr.append(buttonTd);
+
+          tableBody.append(tr);
+        });
+      }
+
+
+      function groupData(datas) { // 使用 groupData() 函式將資料分類（地區、公園名稱、公園種類）
+        return datas.slice(1).reduce(
+          (prev, curr) => {
+            const area = curr[1];
+            const park = curr[2];
+            const type = curr[4];
+            if (!prev.area[area]) {
+              prev.area[area] = [];
+            }
+            prev.area[area].push(curr);
+            if (!prev.park[park]) {
+              prev.park[park] = [];
+            }
+            prev.park[park].push(curr);
+            if (!prev.type[type]) {
+              prev.type[type] = [];
+            }
+            prev.type[type].push(curr);
+
+            return prev;
+          },{ area: {}, park: {}, type: {} });
+      }
+
+      function selectOptions(groupByData) {  // 透過 SelectOptions() 動態生成篩選選單
+
+        Object.keys(groupByData.area).forEach(area => {
+          const option = document.createElement("option");
+          option.value = area;
+          option.textContent = area;
+          areaSelector.append(option);
+        });
+
+        Object.keys(groupByData.park).forEach(park => {
+          const option = document.createElement("option");
+          option.value = park;
+          option.textContent = park;
+          parkSelector.append(option);
+        });
+
+        Object.keys(groupByData.type).forEach(type => {
+          const option = document.createElement("option");
+          option.value = type;
+          option.textContent = type;
+          typeSelection.append(option);
+        });
+      }
+      areaSelector.addEventListener("change", filterData); // 監聽篩選選單的 change 事件，並使用 filterData() 來篩選符合條件的公園
+      parkSelector.addEventListener("change", filterData);
+      typeSelection.addEventListener("change", filterData);
+
+      function filterData() {
+        const selectByArea = areaSelector.value;
+        const selectByPark = parkSelector.value;
+        const selectByType = typeSelection.value;
+
+        let filterByData = allData.slice(1);
+
+        filterByData = filterByData.reduce((result, item) => { // 篩選功能有多個條件，使用 .reduce() 來遍歷資料，並根據選擇的條件 逐步篩選 出符合的公園，同時篩選
+          if (selectByArea && item[1] !== selectByArea) {
+            return result;
+          }
+          if (selectByPark && item[2] !== selectByPark) {
+            return result;
+          }
+          if (selectByType && item[4] !== selectByType) {
+            return result;
+          }
+          result.push(item);
+          return result;
+        }, []);
+
+        currentPage = 1;
+
+        randerDOM([allData[0], ...filterByData]); // 篩選後會重新渲染表格 (randerDOM())
+      }
+
+      button.addEventListener("click", () => { // 提供重新篩選按鈕，一鍵重置篩選條件，回復到完整資料
+        areaSelector.value = "";
+        parkSelector.value = "";
+        typeSelection.value = "";
+        currentPage=1;
+
+        randerDOM(allData);
+      });
+
+      prev.addEventListener("click", () => {
+        if (currentPage > 1) {
+          currentPage=currentPage-1;
+          randerDOM(allData); // 透過 randerDOM() 渲染目前頁數的資料
+        }
+      });
+
+      next.addEventListener("click", () => {
+        if (currentPage * itemsPage < allData.length - 1) {
+          currentPage=currentPage+1;
+          randerDOM(allData);
+        }
+      });
+
+    </script>
+  </body>
+</html>
