@@ -73,7 +73,7 @@
       const next = document.querySelector("#next");
 
       let allData = []; // 存放載入的所有公園CSV資料
-      const itemsPage = 50; // 每頁顯示 50 筆資料 (itemsPage = 50)  // 公園資料很多，如何提升效能？加入分頁功能每次只顯示 50 筆，減少 DOM 操作，提高渲染速度與效能
+      const itemsPage = 50; // 每頁顯示 50 筆資料，加入分頁減少 DOM 操作，提高渲染速度與效能
       let currentPage = 1; // 使用 currentPage 控制當前頁數，點擊 上一頁/下一頁 來更新 currentPage
 
       loadData();
@@ -82,10 +82,10 @@
       async function loadData() {
         try {
           const result = await fetch("datas.csv").then(res => res.text()); // 透過 fetch("datas.csv") 讀取 CSV 檔案，轉換成陣列並儲存到 allData
-          const datas = result.split(/\r\n/).map((d) => d.split(",")); // CSV 資料讀取後轉換成結構化的 JavaScript 陣列：使用 .split(/\r\n/) 來切割每一行，並用 .map(row.split(",")) 來處理每個欄位
-          allData = datas; // 將 CSV 內容存入 allData 變數
-          randerDOM(datas); // 顯示資料
-          selectOptions(groupData(datas)); // 動態生成篩選選單
+          const datas = result.split(/\r\n/).map((d) => d.split(",")); // CSV 資料讀取後轉換成結構化的 JavaScript 陣列：使用 .split(/\r\n/) 來切割每一行，並用 .map(row.split(",")) 把每一行的逗號 (,) 分隔成陣列，變成表格結構化資料
+          allData = datas; // 儲存轉換後的公園資料
+          randerDOM(datas); // 初始化畫面，顯示所有公園資料
+          selectOptions(groupData(datas)); // 動態生成篩選選單選項
         } catch (error) {
           console.log(error);
         }
@@ -106,7 +106,7 @@
         th.textContent = "google map";
         tableHeader.append(th);
 
-        const start = (currentPage - 1) * itemsPage;
+        const start = (currentPage - 1) * itemsPage; // 計算分頁範圍
         const end = start + itemsPage;
 
         datas.slice(start + 1, end + 1).forEach(row => { // 只顯示當前頁面的 50 筆資料，避免一次渲染過多影響效能
@@ -142,19 +142,22 @@
 
       // 篩選功能
       function groupData(datas) { // 使用 groupData() 函式將資料分類（地區、公園名稱、公園種類）
-        return datas.slice(1).reduce( 
+        return datas.slice(1).reduce( // reduce() 讓所有相同地區、公園、種類的資料歸類在一起
           (prev, curr) => {
             const area = curr[1];
             const park = curr[2];
             const type = curr[4];
+
             if (!prev.area[area]) {
               prev.area[area] = [];
             }
             prev.area[area].push(curr);
+
             if (!prev.park[park]) {
               prev.park[park] = [];
             }
             prev.park[park].push(curr);
+            
             if (!prev.type[type]) {
               prev.type[type] = [];
             }
@@ -164,7 +167,8 @@
           },{ area: {}, park: {}, type: {} });
       }
 
-      function selectOptions(groupByData) {  // 透過 SelectOptions() 動態生成篩選選單
+      // 建立篩選選單
+      function selectOptions(groupByData) {  // selectOptions() 根據 groupData() 的結果，動態生成篩選選單的選項
 
         Object.keys(groupByData.area).forEach(area => {
           const option = document.createElement("option");
@@ -191,6 +195,7 @@
       parkSelector.addEventListener("change", filterData);
       typeSelection.addEventListener("change", filterData);
 
+      // 篩選資料
       function filterData() {
         const selectByArea = areaSelector.value;
         const selectByPark = parkSelector.value;
@@ -208,7 +213,7 @@
           if (selectByType && item[4] !== selectByType) {
             return result;
           }
-          result.push(item);
+          result.push(item); // // 這個公園符合所有條件，加入結果陣列
           return result;
         }, []);
 
