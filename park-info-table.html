@@ -4,11 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>公園資料表格</title>
-    <!-- 這是一個 公園資料篩選與查詢系統，可以讓使用者透過 地區、公園名稱、公園種類 進行篩選，並且能夠 分頁顯示資料，還可以點擊按鈕開啟 Google 地圖查看公園位置。 -->
-     <!-- 這個作品的主要目標是：
-✅ 提升查詢效率，讓使用者能快速找到想要的公園資訊
-✅ 使用者體驗優化，提供篩選功能，減少不必要的資訊干擾
-✅ 分頁顯示，防止資料過多時影響效能與使用者體驗 -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -22,7 +17,6 @@
       }
     </style>
   </head>
-  <!-- 這個專案使用了 HTML、CSS、JavaScript、Bootstrap 來實作，並且透過 CSV 檔案讀取資料，然後使用 JavaScript 來 處理篩選、分頁與資料渲染。 -->
   <body>
     <div class="container my-4">
       <h2 class="text-center mb-4">公園資料表格</h2>
@@ -216,6 +210,15 @@
           result.push(item); // // 這個公園符合所有條件，加入結果陣列
           return result;
         }, []);
+
+        // filterByData = filterByData.filter(item => {
+        //   return (!selectByArea || item[1] === selectByArea) &&
+        //         (!selectByPark || item[2] === selectByPark) &&
+        //         (!selectByType || item[4] === selectByType);
+        // });
+
+        // .filter() 直接回傳 true 或 false，決定是否要保留這筆資料。
+        // .reduce() 是用 result 陣列來收集符合條件的資料，兩者結果相同。
 
         currentPage = 1; // 每次篩選後，將 currentPage 重設為 1，顯示第一頁
 
