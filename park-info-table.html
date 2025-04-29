@@ -67,7 +67,7 @@
       const next = document.querySelector("#next");
 
       let allData = []; // 存放載入的所有公園CSV資料
-      const itemsPage = 50; // 每頁顯示 50 筆資料，加入分頁減少 DOM 操作，提高渲染速度與效能
+      const itemsPage = 50; // 加入分頁減少 DOM 操作，提高渲染速度與效能
       let currentPage = 1; // 使用 currentPage 控制當前頁數，點擊 上一頁/下一頁 來更新 currentPage
 
       loadData();
@@ -75,8 +75,8 @@
       // 載入 CSV 資料
       async function loadData() {
         try {
-          const result = await fetch("datas.csv").then(res => res.text()); // 透過 fetch("datas.csv") 讀取 CSV 檔案，轉換成陣列並儲存到 allData
-          const datas = result.split(/\r\n/).map((d) => d.split(",")); // CSV 資料讀取後轉換成結構化的 JavaScript 陣列：使用 .split(/\r\n/) 來切割每一行，並用 .map(row.split(",")) 把每一行的逗號 (,) 分隔成陣列，變成表格結構化資料
+          const result = await fetch("datas.csv").then(res => res.text()); // fetch 讀取 CSV 檔案，轉換成陣列並儲存到 allData
+          const datas = result.split(/\r\n/).map((d) => d.split(",")); // CSV 資料讀取後轉換成陣列：使用 .split(/\r\n/) 來切割每一行，並用 .map(row.split(",")) 把每一行的逗號 (,) 分隔成陣列，變成表格結構化資料
           allData = datas; // 儲存轉換後的公園資料
           randerDOM(datas); // 初始化畫面，顯示所有公園資料
           selectOptions(groupData(datas)); // 動態生成篩選選單選項
@@ -197,7 +197,7 @@
 
         let filterByData = allData.slice(1);
 
-        filterByData = filterByData.reduce((result, item) => { // 篩選功能有多個條件，使用 .reduce() 來遍歷資料，並根據選擇的條件 逐步篩選 出符合的公園，同時篩選
+        filterByData = filterByData.reduce((result, item) => { // 篩選功能有多個條件，使用 .reduce() 來遍歷資料，並根據選擇的條件 逐步篩選出符合的公園，同時篩選
           if (selectByArea && item[1] !== selectByArea) {
             return result;
           }
